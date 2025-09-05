@@ -1,7 +1,5 @@
 # GiveRoll
 
-# technical-assesment4
-
 # Create vitual environment
 python -m venv venv_name
 
