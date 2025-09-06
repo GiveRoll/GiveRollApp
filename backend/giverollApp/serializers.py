@@ -1,12 +1,27 @@
 from rest_framework import serializers
-from .models import Draw, Prize
+from .models import Draw, Prize, Winners, Participants
 
+
+class SupportSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254, required=True)
+    subject = serializers.CharField(max_length=250, required=True)
+    message= serializers.CharField(max_length=2000, required=True)
+
+class ParticipantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Participants
+        fields = ['name', 'email', 'gender', 'platform_s', 'social_handle', 'platform_f']
+        # read_only_fields = ['draw', 'joined_at']
+
+class WinnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Winners
+        fields = ['name', 'email', 'social_handle', 'contact_number', 'state', 'city', 'street_address']
 
 class dashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Draw
         fields = ["id", "title", "description", "number_participants", "end_date", "status"]
-
 
 class prizeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,10 +34,10 @@ class linkSerializer(serializers.ModelSerializer):
         fields = ["generate_link", "embed_link"]
 
 class DrawSerializer(serializers.ModelSerializer):
-    prize = serializers.PrimaryKeyRelatedField(queryset=Prize.objects.all())
+    prizes = prizeSerializer(many=True)
     class Meta:
         model = Draw
-        fields = ["title", "description", "terms_of_condition", "start_date", "end_date", "number_participants", "prize", "facebook", "x", "tiktok", "instagram", "youtube"]
+        fields = ["title", "description", "terms_of_condition", "start_date", "end_date", "number_participants", "prizes", "facebook", "x", "tiktok", "instagram", "youtube"]
 
     def validate_number_participants(self, value):
         if value > 20:
@@ -30,13 +45,10 @@ class DrawSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        prizes_data = validated_data.pop('prize', [])
-        draw = Draw.objects.create(prize=prizes_data, **validated_data)
-
-        # draw.prize.set(prizes_data)
-
-        # for prize_data in prizes_data:
-        #     Prize.objects.create(draw=draw, **prize_data)
+        prizes_data = validated_data.pop('prizes', [])
+        draw = Draw.objects.create(**validated_data)
+        for prize_data in prizes_data:
+            Prize.objects.create(draw=draw, **prize_data)
 
         return draw
 

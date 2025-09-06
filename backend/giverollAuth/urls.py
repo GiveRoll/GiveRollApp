@@ -7,7 +7,7 @@ from dj_rest_auth.registration.views import RegisterView
 
 urlpatterns = [
     path('registration/', include('dj_rest_auth.registration.urls')),
-    path("user/", UserView.as_view(), name="user"),
+    path("user/<int:pk>", UserView.as_view(), name="user"),
     path("social-auth/", SocialLogin.as_view(), name="social_login"),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', TokenBlacklistView.as_view(), name='logout'),

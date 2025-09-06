@@ -23,6 +23,7 @@ class UserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = userManagerSerializer
 
+    @swagger_auto_schema(request_body=userManagerSerializer)
     def put(self, request, pk=None): 
         try:
             user = User.objects.get(pk=pk)

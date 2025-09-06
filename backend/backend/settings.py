@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     'djangochannelsrestframework',
 ]
 
-SITE_ID = 3
+SITE_ID = 4
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

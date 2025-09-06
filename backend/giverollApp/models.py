@@ -7,7 +7,7 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class User(AbstractUser):
-    Brand_name = models.CharField(max_length=150, blank=True, null=True)
+    brand_name = models.CharField(max_length=150, blank=True, null=True)
     industry = models.CharField(max_length=250, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     block_status = models.BooleanField(default=False)
@@ -19,11 +19,6 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.full_name}"
     
-class Prize(models.Model):
-    name = models.CharField(max_length=250)
-    value = models.IntegerField()
-    image = models.ImageField(upload_to='prize_images/', blank=True, null=True)
-    number_winners = models.IntegerField(default=1)
 
 class Draw(models.Model):
 
@@ -44,7 +39,6 @@ class Draw(models.Model):
     last_drafted = models.DateTimeField(null=True, blank=True)
     ended_date = models.DateTimeField(null=True, blank=True)
     active_till = models.DurationField(null=True, blank=True)
-    prize = models.ManyToManyField(Prize)
     host = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     facebook = models.BooleanField(default=False)
@@ -58,22 +52,39 @@ class Draw(models.Model):
     status = models.CharField(max_length=10, choices= STATUS_CHOICES, default='active')
     created_at = models.TimeField(auto_now=True)
 
+    def __str__(self):
+        return f"draw{self.id}"
+
 def save(self, *args, **kwargs):
         if self.start_date and self.end_date:
             self.active_till = self.end_date - self.start_date
         super().save(*args, **kwargs)
 
+class Prize(models.Model):
+    name = models.CharField(max_length=250)
+    value = models.IntegerField()
+    image = models.ImageField(upload_to='prize_images/', blank=True, null=True)
+    number_winners = models.IntegerField(default=1)
+    draw = models.ForeignKey(Draw, related_name='prizes', on_delete=models.CASCADE, blank=True, null=True,)
+
+
 class Participants(models.Model):
-    name = models.CharField(unique=True, max_length=150) 
+    name = models.CharField(max_length=100) 
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=7, null=True)
-    platorm = models.CharField(max_length=100, null=True)
-    social_handle = models.CharField(max_length=150, blank=True, null=True, unique=True)
+    platform_s = models.CharField(max_length=100, null=True)
+    social_handle = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    platform_f = models.CharField(max_length=200, null=True)
     draw = models.ForeignKey(Draw, on_delete=models.CASCADE)
     joined_at = models.TimeField(auto_now=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('draw', 'email', 'name')
+        constraints = [
+            models.UniqueConstraint(fields=['draw', 'email'], name='unique_draw_email'),
+            models.UniqueConstraint(fields=['draw', 'ip_address'], name='unique_draw_ip'),
+            models.UniqueConstraint(fields=['draw', 'social_handle'], name='unique_draw_social_handle'),
+        ]
 
 class Winners(models.Model):
 
@@ -83,16 +94,15 @@ class Winners(models.Model):
         ('pending', 'pending'),
     ]
 
-    name = models.CharField(unique=True, max_length=150)
-    email = models.EmailField(unique=True, null= True )
+    name = models.CharField(max_length=150)
+    email = models.EmailField(unique=True, null= True)
+    social_handle = models.CharField(max_length=100, blank=True, null=True)
     chosen_at = models.DateTimeField(null=False, blank=False) 
     draw = models.ForeignKey(Draw, on_delete=models.CASCADE)
     email_status = models.CharField(max_length=10, choices= STATUS_CHOICES, default='not sent')
     prize_status = models.BooleanField(default=False)
-    account_number = models.PositiveIntegerField(default=0)
-    bank_account_name = models.CharField(max_length=255, null=True, blank=True)
-    bank_name = models.CharField(max_length=255, null=True, blank=True)
     contact_number = models.PositiveIntegerField(default=0)
-    pickup_address = models.CharField(max_length=500, null=True, blank=True)
-    confirmation_code = models.CharField(max_length=6, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    street_address = models.CharField(max_length=200, null=True, blank=True)
 
